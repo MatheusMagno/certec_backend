@@ -1,4 +1,5 @@
 import express from 'express';
+import { supabase } from '../supabaseConnection';
 
 const router = express.Router();
 
@@ -6,9 +7,17 @@ export default (pool) => {
   // Listar veículos
   router.get('/', async (req, res) => {
     try {
-      const result = await pool.query('SELECT * FROM vehicles');
-      res.json(result.rows);
+      const {data, error} = await supabase
+      .from('vehicles')
+      .select('*');
+      
+      if (error) {
+        console.error('Erro ao buscar veículos:', error);
+        return res.status(500).json({ error: 'Erro ao buscar veículos', details: error.message });
+      }
+      res.json(data);
     } catch (err) {
+      console.error('Erro ao buscar Veículo:', err);
       res.status(500).json({ error: 'Erro ao buscar veículos', details: err.message });
     }
   });

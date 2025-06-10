@@ -1,4 +1,5 @@
 import express from 'express';
+import {supabase} from '../supabaseConnection.js';
 
 const router = express.Router();
 
@@ -6,9 +7,17 @@ export default (pool) => {
   // Listar todos os abastecimentos
   router.get('/', async (req, res) => {
     try {
-      const result = await pool.query('SELECT * FROM supplies');
-      res.json(result.rows);
+      const { data, error } = await supabase
+        .from('supplies')
+        .select('*');
+
+      if (error) {
+        console.error('Erro ao buscar abastecimentos:', error);
+        return res.status(500).json({ error: 'Erro ao buscar abastecimentos', details: error.message });
+      }
+      res.json(data);
     } catch (err) {
+      console.error('Erro ao buscar abastecimentos:', err);
       res.status(500).json({ error: 'Erro ao buscar abastecimentos', details: err.message });
     }
   });
