@@ -6,9 +6,22 @@ const router = express.Router();
 export default (pool) => {
   // Listar motoristas
   router.get('/', async (req, res) => {
-  //const { name } = req.query;
+  const { name } = req.query;
 
   try {
+    if (name) {
+      const { data, error } = await supabase
+        .from('drivers')
+        .select('*')
+        .eq('name', name.trim().toLowerCase());
+
+      if (error) {
+        console.error('Erro ao buscar motorista:', error);
+        return res.status(500).json({ error: 'Erro ao buscar motorista', details: error.message });
+      }
+
+      return res.json(data);
+    }
     const { data, error } = await supabase
       .from('drivers')
       .select('*');
