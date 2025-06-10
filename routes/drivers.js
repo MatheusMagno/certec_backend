@@ -38,23 +38,6 @@ export default (pool) => {
     res.status(500).json({ error: 'Erro ao buscar motoristas', details: err.message });
   }
   });
-  /*
-  try {
-    if (name) {
-      const result = await pool.query(
-        'SELECT * FROM drivers WHERE TRIM(LOWER(name)) = TRIM(LOWER($1))',
-        [name]
-      );
-      return res.json(result.rows);
-    }
-    const result = await pool.query('SELECT * FROM drivers');
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({ error: 'Erro ao buscar motoristas', details: err.message });
-  }
-  */
- 
-
 
   // Cadastrar motorista
   router.post('/', async (req, res) => {
@@ -63,50 +46,88 @@ export default (pool) => {
       return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
     }
     try {
-      const result = await pool.query(
-        'INSERT INTO drivers (name, cnh, validade_cnh, enterprise) VALUES ($1, $2, $3, $4) RETURNING *',
-        [name, cnh, validade_cnh, enterprise]
-      );
-      res.status(201).json(result.rows[0]);
-    } catch (err) {
-      res.status(500).json({ error: 'Erro ao cadastrar motorista', details: err.message });
-    }
+      const { data, error } = await supabase
+        .from('drivers')
+        .insert([{ name, cnh, validade_cnh, enterprise }])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Erro ao cadastrar motorista:', error);
+        return res.status(500).json({ error: 'Erro ao cadastrar motorista', details: error.message });
+      }
+
+      res.status(201).json(data);
+    }catch (err) {
+    console.error('Erro ao cadastrar motorista:', err);
+    res.status(500).json({ error: 'Erro ao cadastrar motorista', details: err.message });
+  }
   });
 
   // Deletar motorista
-  router.delete('/:id', async (req, res) => {
-    const id = parseInt(req.params.id, 10);
-    try {
-      const result = await pool.query('DELETE FROM drivers WHERE id = $1', [id]);
-      if (result.rowCount === 0) {
-        return res.status(404).json({ error: 'Motorista não encontrado' });
-      }
-      res.status(200).json({ message: 'Motorista deletado com sucesso' });
-    } catch (err) {
-      res.status(500).json({ error: 'Erro ao deletar motorista', details: err.message });
+ router.delete('/:id', async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+
+  try {
+    const { data, error } = await supabase
+      .from('drivers')
+      .delete()
+      .eq('id', id)
+      .select();
+
+    if (error) {
+      console.error('Erro ao deletar motorista:', error);
+      return res.status(500).json({ error: 'Erro ao deletar motorista', details: error.message });
     }
-  });
+
+    if (!data || data.length === 0) {
+      return res.status(404).json({ error: 'Motorista não encontrado' });
+    }
+
+    res.status(200).json({ message: 'Motorista deletado com sucesso', deleted: data[0] });
+  } catch (err) {
+    console.error('Erro ao deletar motorista:', err);
+    res.status(500).json({ error: 'Erro ao deletar motorista', details: err.message });
+  }
+});
 
   // Editar motorista
   router.put('/:id', async (req, res) => {
-    const id = parseInt(req.params.id, 10);
-    const { name, cnh, validade_cnh, enterprise } = req.body;
-    if (!name || !cnh || !validade_cnh || !enterprise) {
-      return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
+  const id = parseInt(req.params.id, 10);
+  const { name, cnh, validade_cnh, enterprise } = req.body;
+  
+  if (!name || !cnh || !validade_cnh || !enterprise) {
+    return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('drivers')
+      .update({
+        name: name,
+        cnh: cnh,
+        validade_cnh: validade_cnh,
+        enterprise: enterprise
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Erro ao editar motorista:', error);
+      return res.status(500).json({ error: 'Erro ao editar motorista', details: error.message });
     }
-    try {
-      const result = await pool.query(
-        'UPDATE drivers SET name = $1, cnh = $2, validade_cnh = $3, enterprise = $4 WHERE id = $5 RETURNING *',
-        [name, cnh, validade_cnh, enterprise, id]
-      );
-      if (result.rowCount === 0) {
-        return res.status(404).json({ error: 'Motorista não encontrado' });
-      }
-      res.json(result.rows[0]);
-    } catch (err) {
-      res.status(500).json({ error: 'Erro ao editar motorista', details: err.message });
+
+    if (!data) {
+      return res.status(404).json({ error: 'Motorista não encontrado' });
     }
-  });
+
+    res.json(data);
+  } catch (err) {
+    console.error('Erro ao editar motorista:', err);
+    res.status(500).json({ error: 'Erro ao editar motorista', details: err.message });
+  }
+});
 
   return router;
 };
