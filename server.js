@@ -3,15 +3,12 @@ import cors from 'cors';
 import pkg from 'pg';
 import dotenv from 'dotenv';
 
-import { createClient } from '@supabase/supabase-js'
 
 import driversRoutes from './routes/drivers.js';
 import vehiclesRoutes from './routes/vehicles.js';
 import suppliesRoutes from './routes/supply.js';
 
 dotenv.config();
-
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 
 const { Pool } = pkg;
 

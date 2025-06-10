@@ -1,11 +1,31 @@
 import express from 'express';
+import { supabase } from '../supabaseConnection.js';
 
 const router = express.Router();
 
 export default (pool) => {
   // Listar motoristas
   router.get('/', async (req, res) => {
-  const { name } = req.query;
+  //const { name } = req.query;
+
+  try {
+    const { data, error } = await supabase
+      .from('drivers')
+      .select('*');
+
+    if (error) {
+      console.error('Erro ao buscar motoristas:', error);
+      return res.status(500).json({ error: 'Erro ao buscar motoristas', details: error.message });
+    }
+
+    res.json(data);
+  }
+  catch (err) {
+    console.error('Erro ao buscar motoristas:', err);
+    res.status(500).json({ error: 'Erro ao buscar motoristas', details: err.message });
+  }
+  });
+  /*
   try {
     if (name) {
       const result = await pool.query(
@@ -19,7 +39,9 @@ export default (pool) => {
   } catch (err) {
     res.status(500).json({ error: 'Erro ao buscar motoristas', details: err.message });
   }
-});
+  */
+ 
+
 
   // Cadastrar motorista
   router.post('/', async (req, res) => {
