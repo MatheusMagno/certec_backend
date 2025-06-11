@@ -15,7 +15,7 @@ export default (pool) => {
         console.error('Erro ao buscar abastecimentos:', error);
         return res.status(500).json({ error: 'Erro ao buscar abastecimentos', details: error.message });
       }
-      res.status(201).json(data);
+      res.status(200).json(data);
     } catch (err) {
       console.error('Erro ao buscar abastecimentos:', err);
       res.status(500).json({ error: 'Erro ao buscar abastecimentos', details: err.message });
