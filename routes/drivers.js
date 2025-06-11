@@ -13,15 +13,21 @@ export default (pool) => {
       const { data, error } = await supabase
         .from('drivers')
         .select('*')
-        .eq('name', name.trim().toLowerCase());
+        .ilike('name', `%${name.trim().toLowerCase()}%`);
 
       if (error) {
         console.error('Erro ao buscar motorista:', error);
         return res.status(500).json({ error: 'Erro ao buscar motorista', details: error.message });
       }
 
-      res.status(201).json(data);
+      if (!data || data.length === 0) {
+        return res.status(404).json({ error: 'Nenhum motorista encontrado' });
+      }
+
+      return res.status(200).json(data);
     }
+    
+    // Busca geral
     const { data, error } = await supabase
       .from('drivers')
       .select('*');
@@ -31,13 +37,13 @@ export default (pool) => {
       return res.status(500).json({ error: 'Erro ao buscar motoristas', details: error.message });
     }
 
-    res.status(201).json(data);
+    res.status(200).json(data);
   }
   catch (err) {
     console.error('Erro ao buscar motoristas:', err);
     res.status(500).json({ error: 'Erro ao buscar motoristas', details: err.message });
   }
-  });
+});
 
   // Cadastrar motorista
   router.post('/', async (req, res) => {
