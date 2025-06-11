@@ -20,7 +20,7 @@ export default (pool) => {
         return res.status(500).json({ error: 'Erro ao buscar motorista', details: error.message });
       }
 
-      return res.json(data);
+      res.status(201).json(data);
     }
     const { data, error } = await supabase
       .from('drivers')
@@ -31,7 +31,7 @@ export default (pool) => {
       return res.status(500).json({ error: 'Erro ao buscar motoristas', details: error.message });
     }
 
-    res.json(data);
+    res.status(201).json(data);
   }
   catch (err) {
     console.error('Erro ao buscar motoristas:', err);
@@ -73,7 +73,8 @@ export default (pool) => {
       .from('drivers')
       .delete()
       .eq('id', id)
-      .select();
+      .select()
+      .single();
 
     if (error) {
       console.error('Erro ao deletar motorista:', error);
@@ -122,7 +123,7 @@ export default (pool) => {
       return res.status(404).json({ error: 'Motorista não encontrado' });
     }
 
-    res.json(data);
+    res.status(201).json(data);
   } catch (err) {
     console.error('Erro ao editar motorista:', err);
     res.status(500).json({ error: 'Erro ao editar motorista', details: err.message });

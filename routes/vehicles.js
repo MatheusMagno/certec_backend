@@ -15,7 +15,7 @@ export default (pool) => {
         console.error('Erro ao buscar veículos:', error);
         return res.status(500).json({ error: 'Erro ao buscar veículos', details: error.message });
       }
-      res.json(data);
+      res.status(201).json(data);
     } catch (err) {
       console.error('Erro ao buscar Veículo:', err);
       res.status(500).json({ error: 'Erro ao buscar veículos', details: err.message });
@@ -29,12 +29,20 @@ export default (pool) => {
       return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
     }
     try {
-      const result = await pool.query(
-        'INSERT INTO vehicles (placa, modelo, tipo_do_combustivel, km_atual) VALUES ($1, $2, $3, $4) RETURNING *',
-        [placa, modelo, tipo_do_combustivel, km_atual]
-      );
-      res.status(201).json(result.rows[0]);
+      const { data, error } = await supabase
+        .from('vehicles')
+        .insert([{ placa, modelo, tipo_do_combustivel, km_atual }])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Erro ao cadastrar veículo:', error);
+        return res.status(500).json({ error: 'Erro ao cadastrar veículo', details: error.message });
+      }
+
+      res.status(201).json(data);
     } catch (err) {
+      console.error('Erro ao cadastrar veículo:', err);
       res.status(500).json({ error: 'Erro ao cadastrar veículo', details: err.message });
     }
   });
@@ -43,12 +51,22 @@ export default (pool) => {
   router.delete('/:id', async (req, res) => {
     const id = parseInt(req.params.id, 10);
     try {
-      const result = await pool.query('DELETE FROM vehicles WHERE id = $1', [id]);
-      if (result.rowCount === 0) {
-        return res.status(404).json({ error: 'veículo não encontrado' });
+      const {data, error} = await supabase
+        .from('vehicles')
+        .delete()
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) {
+        console.error('Erro ao deletar veículo:', error);
+        return res.status(500).json({ error: 'Erro ao deletar veículo', details: error.message });
       }
-      res.status(200).json({ message: 'veículo deletado com sucesso' });
+      if (!data) {
+        return res.status(404).json({ error: 'Veículo não encontrado' });
+      }
+      res.status(200).json({ message: 'Veículo deletado com sucesso', data });
     } catch (err) {
+      console.error('Erro ao deletar veículo:', err);
       res.status(500).json({ error: 'Erro ao deletar veículo', details: err.message });
     }
   });
@@ -57,19 +75,30 @@ export default (pool) => {
   router.put('/:id', async (req, res) => {
     const id = parseInt(req.params.id, 10);
     const { placa, modelo, tipo_do_combustivel, km_atual } = req.body;
+
     if (!placa || !modelo || !tipo_do_combustivel || !km_atual) {
       return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
     }
     try {
-      const result = await pool.query(
-        'UPDATE vehicles SET placa = $1, modelo = $2, tipo_do_combustivel = $3, km_atual = $4 WHERE id = $5 RETURNING *',
-        [placa, modelo, tipo_do_combustivel, km_atual, id]
-      );
-      if (result.rowCount === 0) {
-        return res.status(404).json({ error: 'veículo não encontrado' });
+      const { data, error } = await supabase
+        .from('vehicles')
+        .update({ placa, modelo, tipo_do_combustivel, km_atual })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Erro ao editar veículo:', error);
+        return res.status(500).json({ error: 'Erro ao editar veículo', details: error.message });
       }
-      res.json(result.rows[0]);
+
+      if (!data) {
+        return res.status(404).json({ error: 'Veículo não encontrado' });
+      }
+
+      res.status(200).json(data);
     } catch (err) {
+      console.error('Erro ao editar veículo:', err);
       res.status(500).json({ error: 'Erro ao editar veículo', details: err.message });
     }
   });

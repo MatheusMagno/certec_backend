@@ -15,7 +15,7 @@ export default (pool) => {
         console.error('Erro ao buscar abastecimentos:', error);
         return res.status(500).json({ error: 'Erro ao buscar abastecimentos', details: error.message });
       }
-      res.json(data);
+      res.status(201).json(data);
     } catch (err) {
       console.error('Erro ao buscar abastecimentos:', err);
       res.status(500).json({ error: 'Erro ao buscar abastecimentos', details: err.message });
@@ -53,11 +53,9 @@ export default (pool) => {
     }
 
     try {
-      const result = await pool.query(
-        `INSERT INTO supplies 
-        (placa, modelo, tipo_do_combustivel, km_atual, data_do_abastecimento, medidor_inicial, medidor_final, quantidade_de_litros, motorista, empresa_do_abastecimento)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
-        [
+      const { data, error } = await supabase
+        .from('supplies')
+        .insert([{
           placa,
           modelo,
           tipo_do_combustivel,
@@ -68,10 +66,18 @@ export default (pool) => {
           quantidade_de_litros,
           motorista,
           empresa_do_abastecimento
-        ]
-      );
-      res.status(201).json(result.rows[0]);
+        }])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Erro ao cadastrar abastecimento:', error);
+        return res.status(500).json({ error: 'Erro ao cadastrar abastecimento', details: error.message });
+      }
+
+      res.status(201).json(data); 
     } catch (err) {
+      console.error('Erro ao cadastrar abastecimento:', err);
       res.status(500).json({ error: 'Erro ao cadastrar abastecimento', details: err.message });
     }
   });
@@ -108,20 +114,9 @@ export default (pool) => {
     }
 
     try {
-      const result = await pool.query(
-        `UPDATE supplies SET
-          placa = $1,
-          modelo = $2,
-          tipo_do_combustivel = $3,
-          km_atual = $4,
-          data_do_abastecimento = $5,
-          medidor_inicial = $6,
-          medidor_final = $7,
-          quantidade_de_litros = $8,
-          motorista = $9,
-          empresa_do_abastecimento = $10
-        WHERE id = $11 RETURNING *`,
-        [
+      const { data, error } = await supabase
+        .from('supplies')
+        .update({
           placa,
           modelo,
           tipo_do_combustivel,
@@ -131,15 +126,24 @@ export default (pool) => {
           medidor_final,
           quantidade_de_litros,
           motorista,
-          empresa_do_abastecimento,
-          id
-        ]
-      );
-      if (result.rowCount === 0) {
+          empresa_do_abastecimento
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Erro ao editar abastecimento:', error);
+        return res.status(500).json({ error: 'Erro ao editar abastecimento', details: error.message });
+      }
+
+      if (!data) {
         return res.status(404).json({ error: 'Abastecimento não encontrado' });
       }
-      res.json(result.rows[0]);
+
+      res.status(200).json(data);
     } catch (err) {
+      console.error('Erro ao editar abastecimento:', err);  
       res.status(500).json({ error: 'Erro ao editar abastecimento', details: err.message });
     }
   });
@@ -148,12 +152,25 @@ export default (pool) => {
   router.delete('/:id', async (req, res) => {
     const id = parseInt(req.params.id, 10);
     try {
-      const result = await pool.query('DELETE FROM supplies WHERE id = $1', [id]);
-      if (result.rowCount === 0) {
+      const { data, error } = await supabase
+        .from('supplies')
+        .delete()
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Erro ao deletar abastecimento:', error);
+        return res.status(500).json({ error: 'Erro ao deletar abastecimento', details: error.message });
+      }
+
+      if (!data) {
         return res.status(404).json({ error: 'Abastecimento não encontrado' });
       }
-      res.status(200).json({ message: 'Abastecimento deletado com sucesso' });
+
+      res.status(200).json({ message: 'Abastecimento deletado com sucesso', deleted: data });
     } catch (err) {
+      console.error('Erro ao deletar abastecimento:', err);
       res.status(500).json({ error: 'Erro ao deletar abastecimento', details: err.message });
     }
   });
