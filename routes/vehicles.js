@@ -7,6 +7,7 @@ export default (pool) => {
   // Listar veículos
   router.get('/', async (req, res) => {
     const { placa } = req.query;
+
     try {
       if (placa) {
         const {data, error} = await supabase
@@ -25,9 +26,17 @@ export default (pool) => {
 
         return res.status(200).json(data);
       }
+      
+      const { data, error } = await supabase
+      .from('vehicles')
+      .select('*');
 
-      // Busca geral
-      res.status(200).json(data);
+    if (error) {
+      console.error('Erro ao buscar veículo:', error);
+      return res.status(500).json({ error: 'Erro ao buscar veículo', details: error.message });
+    }
+
+    res.status(200).json(data);
     } catch (err) {
       console.error('Erro ao buscar veículos:', err);
       res.status(500).json({ error: 'Erro ao buscar veículos', details: err.message });
