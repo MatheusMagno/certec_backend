@@ -6,6 +6,32 @@ const router = express.Router();
 export default (pool) => {
   // Listar veículos
   router.get('/', async (req, res) => {
+    const { placa } = req.query;
+    try {
+      if (placa) {
+        const {data, error} = await supabase
+          .from('vehicles')
+          .select('*')
+          .ilike('placa', `%${placa.trim().toLowerCase()}%`);
+
+        if (error) {
+          console.error('Erro ao buscar veículo:', error);
+          return res.status(500).json({ error: 'Erro ao buscar veículo', details: error.message });
+        }
+
+        if (!data || data.length === 0) {
+          return res.status(404).json({ error: 'Nenhum veículo encontrado' });
+        }
+
+        return res.status(200).json(data);
+      }
+
+      // Busca geral
+      return listAllVehicles(req, res);
+    } catch (err) {
+      console.error('Erro ao buscar veículos:', err);
+      res.status(500).json({ error: 'Erro ao buscar veículos', details: err.message });
+    }
     try {
       const {data, error} = await supabase
       .from('vehicles')
