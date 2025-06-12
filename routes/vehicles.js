@@ -27,7 +27,7 @@ export default (pool) => {
       }
 
       // Busca geral
-      return listAllVehicles(req, res);
+      res.status(200).json(data);
     } catch (err) {
       console.error('Erro ao buscar veículos:', err);
       res.status(500).json({ error: 'Erro ao buscar veículos', details: err.message });
