@@ -26,7 +26,7 @@ export default (pool) => {
 
         return res.status(200).json(data);
       }
-      
+
       const { data, error } = await supabase
       .from('vehicles')
       .select('*');
@@ -39,20 +39,6 @@ export default (pool) => {
     res.status(200).json(data);
     } catch (err) {
       console.error('Erro ao buscar veículos:', err);
-      res.status(500).json({ error: 'Erro ao buscar veículos', details: err.message });
-    }
-    try {
-      const {data, error} = await supabase
-      .from('vehicles')
-      .select('*');
-      
-      if (error) {
-        console.error('Erro ao buscar veículos:', error);
-        return res.status(500).json({ error: 'Erro ao buscar veículos', details: error.message });
-      }
-      res.status(200).json(data);
-    } catch (err) {
-      console.error('Erro ao buscar Veículo:', err);
       res.status(500).json({ error: 'Erro ao buscar veículos', details: err.message });
     }
   });
